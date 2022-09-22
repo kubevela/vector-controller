@@ -1,0 +1,6 @@
+apiVersion: vector.oam.dev/v1alpha1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  # TODO(user): Add fields here

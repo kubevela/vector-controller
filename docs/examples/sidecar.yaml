@@ -1,0 +1,30 @@
+apiVersion: vector.oam.dev/v1alpha1
+kind: Config
+metadata:
+  name: apache-app-file-log
+  labels:
+    app: apache
+spec:
+  role: sidecar
+  vectorConfig: # vectorConfig 是一个 RawExtention 类型的字段，直接用户可以直接把 yaml 粘贴进来
+    sources:
+      error-log:
+        type: file
+        include:
+          - /var/log/appche/error.log
+      app-log:
+        type: file
+        include:
+          - /var/log/app/app.log
+    sinks:
+      kafka-target:
+        type: kafka
+        inputs:
+          - error-log
+          - app-log
+        bootstrap_servers: 10.14.22.123:9092,10.14.23.332:9092
+        key_field: user_id
+        topic: topic-1234
+        compression: none
+        encoding:
+          codec: json

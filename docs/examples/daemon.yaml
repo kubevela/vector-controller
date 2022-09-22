@@ -1,0 +1,36 @@
+apiVersion: vector.oam.dev/v1alpha1
+kind: Config
+metadata:
+  name: apache-app-stdout-test
+  labels:
+    app: apache
+spec:
+  role: daemon
+  ## 只有当 role 类型为 daemon 或 aggregator 时可以选择，需要 merge的 目的 Configmap，这一点可以在 webook 上做校验
+  targetConfigMap:
+    namespace: default
+    name: vector
+  vectorConfig:
+    sources:
+      stdout:
+        type: kubernetes_logs
+        extra_label_selector: "app == apache"
+        extra_field_selector: "metadata.namespace == default"
+    transforms:
+      apache_parser:
+        inputs:
+          - stdout
+        type: remap
+        source: |
+          . = parse_apache_log(.message)
+      apache_sampler:
+        inputs:
+          - apache_parser
+        type: sampler
+        rate: 40
+    sinks:
+      loki:
+        inputs:
+          - apache_sampler
+        type: loki
+        endpoint: 'http://loki:3100'
