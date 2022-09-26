@@ -34,7 +34,6 @@ const (
 	uniqueConfigmapKey        = "vector.yaml"
 	defaultConfigmapNamespace = "o11y-system"
 	defaultConfigmapName      = "vector"
-
 )
 
 func createOrUpdateUniqueConfigmap(ctx context.Context, k8sClient client.Client, configObject v1alpha1.Config) error {
@@ -60,7 +59,6 @@ func createOrUpdateUniqueConfigmap(ctx context.Context, k8sClient client.Client,
 	}
 	return nil
 }
-
 
 func generateUniqueConfigmap(vectorConfig v1alpha1.Config, configmap *v1.ConfigMap) error {
 	configStr, err := yaml.Marshal(vectorConfig.Spec.VectorConfig)
@@ -101,7 +99,7 @@ func generateMergeConfigMap(vectorConfig *v1alpha1.Config, configmap *v1.ConfigM
 		return err
 	}
 	if configmap.Data == nil {
-		configmap.Data = map[string]string{fmt.Sprintf("%s-%s-vector.yaml", vectorConfig.GetName(), vectorConfig.GetNamespace()):string(configStr) }
+		configmap.Data = map[string]string{fmt.Sprintf("%s-%s-vector.yaml", vectorConfig.GetName(), vectorConfig.GetNamespace()): string(configStr)}
 	} else {
 		configmap.Data[fmt.Sprintf("%s-%s-vector.yaml", vectorConfig.GetName(), vectorConfig.GetNamespace())] = string(configStr)
 	}
@@ -150,4 +148,3 @@ func deleteConfigFromConfigmap(ctx context.Context, k8sClient client.Client, con
 	}
 	return nil
 }
-

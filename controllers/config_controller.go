@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	configFinalizer   = "vector.oam.dev/config-finalizer"
+	configFinalizer = "vector.oam.dev/config-finalizer"
 )
 
 // ConfigReconciler reconciles a Config object

@@ -1,30 +1,110 @@
 apiVersion: vector.oam.dev/v1alpha1
 kind: Config
 metadata:
-  name: apache-app-file-log
+  name: my-biz-test
   labels:
     app: apache
 spec:
   role: sidecar
   vectorConfig: # vectorConfig 是一个 RawExtention 类型的字段，直接用户可以直接把 yaml 粘贴进来
     sources:
-      error-log:
-        type: file
-        include:
-          - /var/log/appche/error.log
       app-log:
         type: file
         include:
           - /var/log/app/app.log
-    sinks:
-      kafka-target:
-        type: kafka
+    transforms:
+      apache_parser:
         inputs:
-          - error-log
           - app-log
-        bootstrap_servers: 10.14.22.123:9092,10.14.23.332:9092
-        key_field: user_id
-        topic: topic-1234
+        type: remap
+        source: |
+          . = parse_apache_log!(.message, format: "common")
+      apache_sampler:
+        inputs:
+          - apache_parser
+        type: sampler
+        rate: 70
+    sinks:
+      loki:
+        type: loki
+        inputs:
+          - apache_sampler
+        endpoint: http://loki:3100
         compression: none
+        request:
+          concurrency: 10
+        labels:
+          log_type: file
+          forward: sidecar
+          pod_name: '"${MY_POD_NAME}"'
+          pod_namespace: '"${MY_POD_NAMESPACE}"'
         encoding:
           codec: json
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-biz-test
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app.oam.dev/component: my-biz
+  template:
+    metadata:
+      labels:
+        app.oam.dev/component: my-biz
+    spec:
+      containers:
+        - command:
+            - flog
+            - -t
+            - log
+            - -o
+            - /var/log/app/app.log
+            - -s
+            - 30s
+            - -w
+          image: mingrammer/flog
+          name: my-biz
+          volumeMounts:
+            - mountPath: /var/log/app/
+              name: container-log
+        - args:
+            - --config-dir
+            - /etc/vector/
+            - -w
+          env:
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: MY_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+          image: timberio/vector:0.23.3-alpine
+          name: vector-log
+          volumeMounts:
+            - mountPath: /var/log/app/
+              name: container-log
+            - mountPath: /etc/vector/
+              name: vector-config
+            - mountPath: /vector-data-dir
+              name: vector-data
+      volumes:
+        - name: vector-config
+          projected:
+            defaultMode: 420
+            sources:
+              - configMap:
+                  name: my-biz-test
+        - emptyDir: { }
+          name: container-log
+        - emptyDir: { }
+          name: vector-data
+

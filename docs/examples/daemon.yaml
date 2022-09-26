@@ -1,36 +1,70 @@
 apiVersion: vector.oam.dev/v1alpha1
 kind: Config
 metadata:
-  name: apache-app-stdout-test
+  name: apache-app-stdout
   labels:
     app: apache
 spec:
   role: daemon
   ## 只有当 role 类型为 daemon 或 aggregator 时可以选择，需要 merge的 目的 Configmap，这一点可以在 webook 上做校验
   targetConfigMap:
-    namespace: default
+    namespace: vector
     name: vector
   vectorConfig:
     sources:
-      stdout:
+      app-log:
         type: kubernetes_logs
-        extra_label_selector: "app == apache"
-        extra_field_selector: "metadata.namespace == default"
+        extra_field_selector: metadata.namespace==default
+        extra_label_selector: app==apache-app-stdout
     transforms:
       apache_parser:
         inputs:
-          - stdout
+          - app-log
         type: remap
         source: |
-          . = parse_apache_log(.message)
+          .message = parse_apache_log!(.message, format: "common")
       apache_sampler:
         inputs:
           - apache_parser
         type: sampler
-        rate: 40
+        rate: 70
     sinks:
       loki:
+        type: loki
         inputs:
           - apache_sampler
-        type: loki
-        endpoint: 'http://loki:3100'
+        endpoint: http://loki.default:3100
+        compression: none
+        request:
+          concurrency: 10
+        labels:
+          log_type: stdout
+          forward: daemon
+          pod_namespace: "{{ kubernetes.pod_namespace }}"
+          pod_name: "{{ kubernetes.pod_name }}"
+        encoding:
+          codec: json
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apache-app-stdout
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: apache-app-stdout
+  template:
+    metadata:
+      labels:
+        app: apache-app-stdout
+    spec:
+      containers:
+        - command:
+            - flog
+            - -s
+            - 30s
+          image: mingrammer/flog
+          name: my-biz

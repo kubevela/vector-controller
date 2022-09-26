@@ -29,10 +29,10 @@ type ConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Role            RoleType             `json:"role"`
-	TargetConfigMap ConfigmapRef         `json:"targetConfigMap,omitempty"`
+	Role            RoleType     `json:"role"`
+	TargetConfigMap ConfigmapRef `json:"targetConfigMap,omitempty"`
 	// +kubebuilder:pruning:PreserveUnknownFields
-	VectorConfig    runtime.RawExtension `json:"vectorConfig"`
+	VectorConfig runtime.RawExtension `json:"vectorConfig"`
 }
 
 // +enum
