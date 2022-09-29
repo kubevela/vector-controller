@@ -36,19 +36,45 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: vector-controller
+  {{- include "vector-controller.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: vector-controller
+    {{- include "vector-controller.labels" . | nindent 8 }}
     spec:
       serviceAccountName: vector-controller
       containers:
         - name: vector-controller
-          image: "wangyikewyk/vector-controller:0.1.0"
-          imagePullPolicy: Always
+          image: {{ .Values.imageRegistry }}{{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: IfNotPresent
           ports:
             - name: http
-              containerPort: 8082
+              containerPort: 9443
               protocol: TCP
+          volumeMounts:
+            - mountPath: /tmp/k8s-webhook-server/serving-certs/
+              name: tls-cert-vol
+              readOnly: true
+      volumes:
+        - name: tls-cert-vol
+          secret:
+            defaultMode: 420
+            secretName: vector-controller-admission
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: vector-controller
+  labels:
+  {{- include "vector-controller.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: 9443
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+  {{- include "vector-controller.selectorLabels" . | nindent 4 }}
 

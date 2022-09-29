@@ -1,0 +1,41 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: vector-controller-admission
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    caBundle: Cg==
+    service:
+      name: vector-controller-webhook
+      namespace: {{ .Release.Namespace }}
+      path: /validate-vector-oam-dev-v1alpha1-config
+  failurePolicy: Fail
+  name: vconfig.kb.io
+  rules:
+  - apiGroups:
+    - vector.oam.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - configs
+  sideEffects: None
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: vector-controller-webhook
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+    - port: 443
+      protocol: TCP
+      targetPort: 9443
+  selector:
+    {{ include "vector-controller.selectorLabels" . | nindent 6 }}
