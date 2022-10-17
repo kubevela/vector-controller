@@ -28,9 +28,6 @@ coverage.txt
 .DS_Store
 _.yaml
 
-# Dependency directories (remove the comment below to include it)
-vendor/
-
 # Vscode files
 .vscode
 .history
