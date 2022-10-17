@@ -28,6 +28,8 @@ coverage.txt
 .DS_Store
 _.yaml
 
+/vendor
+
 # Vscode files
 .vscode
 .history
