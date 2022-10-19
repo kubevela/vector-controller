@@ -1,0 +1,42 @@
+apiVersion: vector.oam.dev/v1alpha1
+kind: Config
+metadata:
+  name: my-biz-test
+  labels:
+    app: apache
+spec:
+  role: sidecar
+  vectorConfig: # vectorConfig 是一个 RawExtention 类型的字段，直接用户可以直接把 yaml 粘贴进来
+    sources:
+      app-log:
+        type: file
+        include:
+          - /var/log/app/app.log
+    transforms:
+      apache_parser:
+        inputs:
+          - app-log
+        type: remap
+        source: |
+          . = parse_apache_log!(.message, format: "common")
+      apache_sampler:
+        inputs:
+          - apache_parser
+        type: sampler
+        rate: 70
+    sinks:
+      loki:
+        type: loki
+        inputs:
+          - apache_sampler1
+        endpoint: http://loki:3100
+        compression: none
+        request:
+          concurrency: 10
+        labels:
+          log_type: file
+          forward: sidecar
+          pod_name: '"${MY_POD_NAME}"'
+          pod_namespace: '"${MY_POD_NAMESPACE}"'
+        encoding:
+          codec: json

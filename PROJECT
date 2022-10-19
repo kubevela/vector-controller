@@ -1,0 +1,19 @@
+domain: oam.dev
+layout:
+- go.kubebuilder.io/v3
+projectName: vector-controller
+repo: kubevela/vector-controller
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: oam.dev
+  group: vector
+  kind: Config
+  path: kubevela/vector-controller/api/v1alpha1
+  version: v1alpha1
+  webhooks:
+    validation: true
+    webhookVersion: v1
+version: "3"
