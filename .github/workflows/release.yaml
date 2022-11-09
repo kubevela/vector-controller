@@ -70,7 +70,7 @@ jobs:
           node-version: '14'
       - uses: oprypin/find-latest-tag@v1
         with:
-          repository: wangyikewxgm/vector-controller
+          repository: kubevela/vector-controller
           releases-only: true
         id: latest_tag
       - name: Tag helm chart image
