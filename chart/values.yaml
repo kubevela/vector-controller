@@ -25,10 +25,10 @@ fullnameOverride: ""
 replicaCount: 1
 
 image:
-  repository: wangyikewyk/vector-controller
+  repository: oamdev/vector-controller
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "0.2.1"
+  tag: latest
 
 imagePullSecrets: []
 
