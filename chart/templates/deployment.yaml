@@ -47,6 +47,10 @@ spec:
       containers:
         - name: vector-controller
           image: {{ .Values.imageRegistry }}{{ .Values.image.repository }}:{{ .Values.image.tag }}
+          args:
+            {{ if .Values.admissionWebhooks.enabled }}
+            - "--disable-webhook=false"
+            {{ end }}
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
